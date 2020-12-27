@@ -3,7 +3,7 @@
 ## Component
 * Zookeeper (for Kafka)
 * Kafka Producer (Kafka Image)
-* Kafka Consumer
+* Kafka Consumer (테스트 코드)
 
 ## 테스트
 ### 카프카 브로커 실행 
