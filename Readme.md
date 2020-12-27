@@ -30,3 +30,5 @@ docker-compose up -d
 * [wurstmeister/kafka](https://hub.docker.com/r/wurstmeister/kafka)
 * [wurstmeister/zookeeper](https://hub.docker.com/r/wurstmeister/zookeeper)
 
+## References
+* [데브원영 T아카데미 Kafka 강의](https://github.com/AndersonChoi/tacademy-kafka)
