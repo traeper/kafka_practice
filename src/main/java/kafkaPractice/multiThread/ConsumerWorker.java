@@ -1,4 +1,4 @@
-package kafkaPractice.consumer;
+package kafkaPractice.multiThread;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -9,45 +9,51 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 
 /**
  * @author traeper
  */
-public class SyncCommitConsumer {
+public class ConsumerWorker implements Runnable {
+    private Properties prop;
+    private String topic;
+    private String threadName;
+    private KafkaConsumer<String, String> consumer;
+
     private static String TOPIC_NAME = "test2";
     private static String GROUP_ID = "testgroup";
     private static String BOOTSTRAP_SERVERS = "127.0.0.1:9092";
 
-    public static void main(String[] args) {
-        Properties configs = new Properties();
-        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID);
-        configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        configs.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+    public ConsumerWorker(Properties prop, String topic, int number) {
+        this.prop = prop;
+        this.topic = topic;
+        this.threadName = "consumer-thread-" + number;
+    }
 
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(configs);
-
-        consumer.subscribe(Arrays.asList(TOPIC_NAME));
-
-        // Graceful Shutdown(SIGTERM으로 재현)
-        Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
+    @Override
+    public void run() {
+        consumer = new KafkaConsumer<>(prop);
+        consumer.subscribe(Collections.singletonList(topic));
 
         try {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println(record.value());
+                    System.out.println(threadName + " >> " + record.value());
                 }
                 consumer.commitSync();
             }
         } catch (WakeupException e) { // WakeupException 발생
-            System.out.println("poll() method trigger WakeupException");
+            System.out.println(threadName + " trigger WakeupException");
         } finally {
             // Consumer Wakeup에 따른 기초 처리
             consumer.commitSync();
             consumer.close();
         }
+    }
+
+    public void shutdown() {
+        consumer.wakeup();
     }
 }
